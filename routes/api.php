@@ -60,8 +60,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Member (IDs: 4 and up)
     Route::middleware('checkUserRole:member')->group(function () {
-        Route::get('/users', [UserController::class, 'show']);
-        Route::get('/commissions', [DataController::class, 'show']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::get('/commissions/{id}', [DataController::class, 'show']);
     });
 
     // Report route
