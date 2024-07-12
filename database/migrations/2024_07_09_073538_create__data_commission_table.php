@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('Type');
             $table->string('Name');
             $table->text('Description');
-            $table->integer('Charges');
-            $table->integer('Amount');
+            $table->decimal('Charges');
+            $table->decimal('Amount');
             $table->timestamps();
         });
     }

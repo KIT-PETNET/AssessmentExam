@@ -15,13 +15,21 @@ class CreateSummaryOfTransactionsTable extends Migration
     {
         Schema::create('summary_of_transactions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('transaction_id');
+            $table->string('Type');
+            $table->string('Name');
+            $table->string('Description');
             $table->decimal('commission', 8, 2);
             $table->decimal('gross_commission', 8, 2);
             $table->decimal('net_commission', 8, 2);
             $table->boolean('vatable')->default(false);
             $table->timestamps();
-            $table->foreign('transaction_id')->references('id')->on('datacommission')->onDelete('cascade');
+        });
+
+        Schema::table('summary_of_transactions', function (Blueprint $table) {
+            $table->decimal('total_gross_commission_vatable', 8, 2)->nullable();
+            $table->decimal('total_net_commission_vatable', 8, 2)->nullable();
+            $table->decimal('total_gross_commission_non_vatable', 8, 2)->nullable();
+            $table->decimal('total_net_commission_non_vatable', 8, 2)->nullable();
         });
     }
 
@@ -33,5 +41,11 @@ class CreateSummaryOfTransactionsTable extends Migration
     public function down()
     {
         Schema::dropIfExists('summary_of_transactions');
+        Schema::table('summary_of_transactions', function (Blueprint $table) {
+            $table->dropColumn('total_gross_commission_vatable');
+            $table->dropColumn('total_net_commission_vatable');
+            $table->dropColumn('total_gross_commission_non_vatable');
+            $table->dropColumn('total_net_commission_non_vatable');
+        });
     }
 }
