@@ -21,6 +21,16 @@ class UserController extends Controller
         return response()->json(['message' => 'Users table reset successfully'], 200);
     }
 
+    public function resetSavedCom()
+    {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('summary_of_transactions')->truncate();
+        DB::statement('ALTER TABLE summary_of_transactions AUTO_INCREMENT = 1;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        return response()->json(['message' => 'summary_of_transactions reset successfully'], 200);
+    }
+
     public function index()
     {
         $users = User::all();
