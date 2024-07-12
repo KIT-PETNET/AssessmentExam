@@ -12,10 +12,16 @@ class SummaryOfTransaction extends Model
     protected $table = 'summary_of_transactions';
 
     protected $fillable = [
-        'transaction_id',
+        'Type',
+        'Name',
+        'Description',
         'commission',
         'gross_commission',
         'net_commission',
         'vatable',
+        'total_gross_commission_vatable',
+        'total_net_commission_vatable',
+        'total_gross_commission_non_vatable',
+        'total_net_commission_non_vatable',
     ];
 }
