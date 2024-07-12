@@ -22,12 +22,8 @@ class ReportController extends Controller
         foreach ($transactions as $transaction) {
             $charges = $transaction->Charges;
 
-            $gross_commission = $charges * ($commission_rate / 100);
-            $commission = $gross_commission * (($commission_rate / 100) / ($n_com_rate / 100));
-
-            // Round the calculated values to two decimal places
-            $gross_commission = round($gross_commission, 2);
-            $commission = round($commission, 2);
+            $gross_commission = round($charges * ($commission_rate / 100), 2);
+            $commission = round($gross_commission * (($commission_rate / 100) / ($n_com_rate / 100)), 2);
 
             // Add calculated values to the transaction object
             $transaction->gross_commission = $gross_commission;
@@ -81,6 +77,7 @@ class ReportController extends Controller
             ->get();
 
         $results = [];
+        $categorizedTotals = [];
         $totalGrossCommissionVatable = 0;
         $totalNetCommissionVatable = 0;
         $totalGrossCommissionNonVatable = 0;
@@ -118,6 +115,19 @@ class ReportController extends Controller
                 $totalGrossCommissionNonVatable += $gross_commission_non_vatable;
                 $totalNetCommissionNonVatable += $net_commission_non_vatable;
             }
+
+            // Save categorized totals to the database
+            $categorizedTotals[$type] = [
+                'total_gross_commission_vatable' => round($results[$type]['total_gross_commission_vatable'] ?? 0, 2),
+                'total_net_commission_vatable' => round($results[$type]['total_net_commission_vatable'] ?? 0, 2),
+                'total_gross_commission_non_vatable' => round($results[$type]['total_gross_commission_non_vatable'] ?? 0, 2),
+                'total_net_commission_non_vatable' => round($results[$type]['total_net_commission_non_vatable'] ?? 0, 2),
+            ];
+
+            // Update only the totals for the specific type
+            DB::table('summary_of_transactions')
+                ->where('Type', $type)
+                ->update($categorizedTotals[$type]);
         }
 
         // Add totals for all transaction types
@@ -127,14 +137,6 @@ class ReportController extends Controller
             'total_gross_commission_non_vatable' => round($totalGrossCommissionNonVatable, 2),
             'total_net_commission_non_vatable' => round($totalNetCommissionNonVatable, 2),
         ];
-
-        // Save totals to the database
-        DB::table('summary_of_transactions')->update([
-            'total_gross_commission_vatable' => round($totalGrossCommissionVatable, 2),
-            'total_net_commission_vatable' => round($totalNetCommissionVatable, 2),
-            'total_gross_commission_non_vatable' => round($totalGrossCommissionNonVatable, 2),
-            'total_net_commission_non_vatable' => round($totalNetCommissionNonVatable, 2),
-        ]);
 
         // Generate and download the report as an Excel file
         $transactions = SummaryOfTransaction::all();
