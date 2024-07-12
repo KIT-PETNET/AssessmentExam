@@ -29,6 +29,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
     Route::post('/auth', [ApiAuthController::class, 'getToken']);
     Route::post('/login', [ApiAuthController::class, 'login']);
     Route::post('/reset-users', [UserController::class, 'resetUsers']);
+    Route::post('/reset-summary', [UserController::class, 'resetSavedCom']);
 });
 
 // Protected APIs
@@ -65,10 +66,8 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Report route
-    Route::post('/reports/calculate-commissions', [ReportController::class, 'calculateCommissionPerTransaction']);
-    Route::post('/reports/save-commissions', [ReportController::class, 'saveCommissionsToDatabase']);
-    Route::get('/reports/compute-commissions', [ReportController::class, 'computeGrossAndNetCommission']);
-    Route::get('/reports/generate', [ReportController::class, 'generateReport']);
+    Route::post('/reports/calculate-commissions', [ReportController::class, 'calculateAndSaveCommissions']);
+    Route::get('/reports/generate', [ReportController::class, 'computeAndGenerateReport']);
 
     // Upload csv route
     Route::post('/upload-csv', [CsvUploadController::class, 'uploadCsv']);
