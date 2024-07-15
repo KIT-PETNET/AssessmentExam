@@ -57,3 +57,6 @@ jobs:
 
     - name: Run Tests
       run: vendor/bin/phpunit
+      
+    - name: Debug Database Connection
+      run: php artisan tinker --eval "print_r(config('database.connections.mysql'));"
