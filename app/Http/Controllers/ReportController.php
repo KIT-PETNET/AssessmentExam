@@ -20,10 +20,16 @@ class ReportController extends Controller
         $commission_rate = 15;
 
         foreach ($transactions as $transaction) {
-            $charges = $transaction->Charges;
+            $charges = floatval($transaction->Charges);
 
-            $gross_commission = round($charges * ($commission_rate / 100), 2);
-            $commission = round($gross_commission * (($commission_rate / 100) / ($n_com_rate / 100)), 2);
+            if (is_nan($charges)) {
+                continue;
+            }
+
+            // Calculate gross commission
+            $gross_commission = $this->roundToTwo($charges * ($commission_rate / 100));
+            // Calculate commission
+            $commission = $this->roundToTwo($gross_commission * (($commission_rate / 100) / ($n_com_rate / 100)));
 
             // Add calculated values to the transaction object
             $transaction->gross_commission = $gross_commission;
@@ -90,12 +96,12 @@ class ReportController extends Controller
 
             // Vatable
             if ($transaction->sum_of_vatable_commission > 0) {
-                $gross_commission_vatable = $transaction->sum_of_vatable_commission / (1 + $vat);
-                $expanded_withholding_tax_vatable = $transaction->sum_of_vatable_commission * $charge_rate;
-                $net_commission_vatable = $gross_commission_vatable - $expanded_withholding_tax_vatable;
+                $gross_commission_vatable = $this->roundToTwo($transaction->sum_of_vatable_commission / (1 + $vat));
+                $expanded_withholding_tax_vatable = $this->roundToTwo($transaction->sum_of_vatable_commission * $charge_rate);
+                $net_commission_vatable = $this->roundToTwo($gross_commission_vatable - $expanded_withholding_tax_vatable);
 
-                $results[$type]['total_gross_commission_vatable'] = round($gross_commission_vatable, 2);
-                $results[$type]['total_net_commission_vatable'] = round($net_commission_vatable, 2);
+                $results[$type]['total_gross_commission_vatable'] = $gross_commission_vatable;
+                $results[$type]['total_net_commission_vatable'] = $net_commission_vatable;
 
                 // Add to total
                 $totalGrossCommissionVatable += $gross_commission_vatable;
@@ -104,12 +110,12 @@ class ReportController extends Controller
 
             // Not Vatable
             if ($transaction->sum_of_non_vatable_commission > 0) {
-                $gross_commission_non_vatable = $transaction->sum_of_non_vatable_commission;
-                $expanded_withholding_tax_non_vatable = $transaction->sum_of_non_vatable_commission * $charge_rate;
-                $net_commission_non_vatable = $gross_commission_non_vatable - $expanded_withholding_tax_non_vatable;
+                $gross_commission_non_vatable = $this->roundToTwo($transaction->sum_of_non_vatable_commission);
+                $expanded_withholding_tax_non_vatable = $this->roundToTwo($transaction->sum_of_non_vatable_commission * $charge_rate);
+                $net_commission_non_vatable = $this->roundToTwo($gross_commission_non_vatable - $expanded_withholding_tax_non_vatable);
 
-                $results[$type]['total_gross_commission_non_vatable'] = round($gross_commission_non_vatable, 2);
-                $results[$type]['total_net_commission_non_vatable'] = round($net_commission_non_vatable, 2);
+                $results[$type]['total_gross_commission_non_vatable'] = $gross_commission_non_vatable;
+                $results[$type]['total_net_commission_non_vatable'] = $net_commission_non_vatable;
 
                 // Add to total
                 $totalGrossCommissionNonVatable += $gross_commission_non_vatable;
@@ -118,10 +124,10 @@ class ReportController extends Controller
 
             // Save categorized totals to the database
             $categorizedTotals[$type] = [
-                'total_gross_commission_vatable' => round($results[$type]['total_gross_commission_vatable'] ?? 0, 2),
-                'total_net_commission_vatable' => round($results[$type]['total_net_commission_vatable'] ?? 0, 2),
-                'total_gross_commission_non_vatable' => round($results[$type]['total_gross_commission_non_vatable'] ?? 0, 2),
-                'total_net_commission_non_vatable' => round($results[$type]['total_net_commission_non_vatable'] ?? 0, 2),
+                'total_gross_commission_vatable' => $results[$type]['total_gross_commission_vatable'] ?? 0,
+                'total_net_commission_vatable' => $results[$type]['total_net_commission_vatable'] ?? 0,
+                'total_gross_commission_non_vatable' => $results[$type]['total_gross_commission_non_vatable'] ?? 0,
+                'total_net_commission_non_vatable' => $results[$type]['total_net_commission_non_vatable'] ?? 0,
             ];
 
             // Update only the totals for the specific type
@@ -132,10 +138,10 @@ class ReportController extends Controller
 
         // Add totals for all transaction types
         $results['total_all_types'] = [
-            'total_gross_commission_vatable' => round($totalGrossCommissionVatable, 2),
-            'total_net_commission_vatable' => round($totalNetCommissionVatable, 2),
-            'total_gross_commission_non_vatable' => round($totalGrossCommissionNonVatable, 2),
-            'total_net_commission_non_vatable' => round($totalNetCommissionNonVatable, 2),
+            'total_gross_commission_vatable' => $this->roundToTwo($totalGrossCommissionVatable),
+            'total_net_commission_vatable' => $this->roundToTwo($totalNetCommissionVatable),
+            'total_gross_commission_non_vatable' => $this->roundToTwo($totalGrossCommissionNonVatable),
+            'total_net_commission_non_vatable' => $this->roundToTwo($totalNetCommissionNonVatable),
         ];
 
         // Generate and download the report as an Excel file
@@ -148,5 +154,11 @@ class ReportController extends Controller
     {
         $vatableTypes = ['MTS', 'IT', 'MMT'];
         return in_array($type, $vatableTypes);
+    }
+
+    // Helper function to round numbers to two decimal places
+    private function roundToTwo($num)
+    {
+        return round($num * 100) / 100;
     }
 }
